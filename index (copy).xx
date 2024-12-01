@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAGASA Weather Advisory System</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .advisory-card {
+      transition: all 0.3s ease;
+    }
+
+    .advisory-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .new-badge {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.7;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+  <!-- Login Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-xl">
+      <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+      <input type="password" id="passcodeInput" placeholder="Enter Passcode" class="w-full p-2 border rounded mb-4">
+      <button onclick="verifyPasscode()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+        Login
+      </button>
+      <p id="loginError" class="text-red-500 mt-2 hidden">Incorrect Passcode</p>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container mx-auto px-4 py-8">
+    <!-- Main Dashboard -->
+    <div id="mainDashboard" class="bg-white shadow-lg rounded-2xl overflow-hidden">
+      <!-- Header -->
+      <div id="systemHeader" class="bg-gradient-to-r from-blue-600 to-blue-400 text-white p-6 cursor-pointer">
+        <h1 class="text-3xl font-bold text-center">PAGASA Weather Advisory System</h1>
+      </div>
+
+      <!-- Category Grid -->
+      <div id="categoryGrid" class="p-6 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Heavy Rainfall Advisory -->
+        <div onclick="openCategoryDetails('heavyRainfall')"
+          class="category-card bg-red-50 rounded-lg p-6 cursor-pointer hover:bg-red-100">
+          <h2 class="text-xl font-bold text-red-700 mb-4">Heavy Rainfall Advisory</h2>
+          <p class="text-gray-600">Critical alerts for heavy rain, potential flooding, and landslide hazards.</p>
+        </div>
+
+        <!-- Rainfall Advisory -->
+        <div onclick="openCategoryDetails('rainfall')"
+          class="category-card bg-green-50 rounded-lg p-6 cursor-pointer hover:bg-green-100">
+          <h2 class="text-xl font-bold text-green-700 mb-4">Rainfall Advisory</h2>
+          <p class="text-gray-600">Moderate to significant rainfall forecasts with potential local impact.</p>
+        </div>
+
+        <!-- Other Weather Updates -->
+        <div onclick="openCategoryDetails('otherUpdates')"
+          class="category-card bg-purple-50 rounded-lg p-6 cursor-pointer hover:bg-purple-100">
+          <h2 class="text-xl font-bold text-purple-700 mb-4">Other Weather Updates</h2>
+          <p class="text-gray-600">Comprehensive information on atmospheric conditions.</p>
+        </div>
+
+        <!-- No Classes Advisory -->
+        <div onclick="openCategoryDetails('noClasses')"
+          class="category-card bg-yellow-50 rounded-lg p-6 cursor-pointer hover:bg-yellow-100">
+          <h2 class="text-xl font-bold text-yellow-700 mb-4">No Classes Advisory</h2>
+          <p class="text-gray-600">Official announcements about school suspensions.</p>
+        </div>
+
+        <!-- Thunderstorm Advisory -->
+        <div onclick="openCategoryDetails('thunderstorm')"
+          class="category-card bg-blue-50 rounded-lg p-6 cursor-pointer hover:bg-blue-100">
+          <h2 class="text-xl font-bold text-blue-700 mb-4">Thunderstorm Advisory</h2>
+          <p class="text-gray-600">Alerts for electrical storms and severe weather conditions.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Details Modal -->
+    <div id="categoryDetailsModal" class="fixed inset-0 bg-white z-40 hidden overflow-y-auto">
+      <div class="container mx-auto px-4 py-8">
+        <button onclick="closeCategoryDetails()" class="mb-4 bg-red-500 text-white px-4 py-2 rounded">
+          Close
+        </button>
+        <div id="categoryDetailsContent" class="space-y-4">
+          <!-- Dynamic content will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="fixed inset-0 bg-white z-50 hidden p-8 overflow-y-auto">
+      <button onclick="closeAdminPanel()" class="mb-4 bg-red-500 text-white px-4 py-2 rounded">
+        Close Admin Panel
+      </button>
+      <h2 class="text-2xl font-bold mb-6">Create Advisory</h2>
+
+      <form id="advisoryForm" class="max-w-2xl mx-auto">
+        <div class="mb-4">
+          <label class="block mb-2">Advisory Category</label>
+          <select id="advisoryCategory" class="w-full p-2 border rounded">
+            <option value="heavyRainfall">Heavy Rainfall</option>
+            <option value="rainfall">Rainfall</option>
+            <option value="otherUpdates">Other Weather Updates</option>
+            <option value="noClasses">No Classes</option>
+            <option value="thunderstorm">Thunderstorm</option>
+          </select>
+        </div>
+
+        <div id="weatherSystemContainer" class="mb-4">
+          <label class="block mb-2">Weather System (Heavy Rainfall Only)</label>
+          <input type="text" id="weatherSystem" class="w-full p-2 border rounded">
+        </div>
+
+        <div class="mb-4">
+          <label class="block mb-2">Heading</label>
+          <input type="text" id="advisoryHeading" class="w-full p-2 border rounded" required>
+        </div>
+
+        <div class="mb-4">
+          <label class="block mb-2">Description</label>
+          <textarea id="advisoryDescription" class="w-full p-2 border rounded" rows="4" required></textarea>
+        </div>
+
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Create Advisory
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Advisory Management System
+    class AdvisorySystem {
+      constructor() {
+        this.advisories = {
+          heavyRainfall: [],
+          rainfall: [],
+          otherUpdates: [],
+          noClasses: [],
+          thunderstorm: []
+        };
+        this.oldAdvisories = {
+          heavyRainfall: [],
+          rainfall: [],
+          otherUpdates: [],
+          noClasses: [],
+          thunderstorm: []
+        };
+        this.initializeEventListeners();
+      }
+
+      initializeEventListeners() {
+        const form = document.getElementById('advisoryForm');
+        const categorySelect = document.getElementById('advisoryCategory');
+        const weatherSystemContainer = document.getElementById('weatherSystemContainer');
+
+        categorySelect.addEventListener('change', () => {
+          weatherSystemContainer.style.display =
+            categorySelect.value === 'heavyRainfall' ? 'block' : 'none';
+        });
+
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.createAdvisory();
+        });
+
+        // Double-click event for admin login
+        document.getElementById('systemHeader').addEventListener('dblclick', () => {
+          document.getElementById('loginModal').classList.remove('hidden');
+        });
+      }
+
+      createAdvisory() {
+        const category = document.getElementById('advisoryCategory').value;
+        const heading = document.getElementById('advisoryHeading').value;
+        const description = document.getElementById('advisoryDescription').value;
+        const weatherSystem = document.getElementById('weatherSystem').value;
+
+        const advisory = {
+          id: `advisory-${Date.now()}`,
+          category,
+          heading,
+          description,
+          weatherSystem: category === 'heavyRainfall' ? weatherSystem : null,
+          issuedDate: new Date(),
+          isNew: true
+        };
+
+        // Move previous advisories to old advisories
+        if (this.advisories[category].length > 0) {
+          this.advisories[category].forEach(adv => {
+            this.oldAdvisories[category].push(adv);
+          });
+        }
+
+        // Clear previous advisories and add new one
+        this.advisories[category] = [advisory];
+
+        // Reset form
+        document.getElementById('advisoryForm').reset();
+
+        // Close admin panel
+        closeAdminPanel();
+
+        // Re-render if current category is open
+        const currentCategory = document.getElementById('categoryDetailsModal').dataset.currentCategory;
+        if (currentCategory === category) {
+          this.renderCategoryDetails(category);
+        }
+      }
+
+      renderCategoryDetails(category) {
+        const container = document.getElementById('categoryDetailsContent');
+        container.innerHTML = ''; // Clear previous content
+
+        // Render active advisories
+        if (this.advisories[category].length > 0) {
+          const activeSection = document.createElement('div');
+          activeSection.innerHTML = '<h2 class="text-2xl font-bold mb-4">Active Advisories</h2>';
+
+          this.advisories[category].forEach(advisory => {
+            const advisoryEl = this.createAdvisoryElement(advisory, true);
+            activeSection.appendChild(advisoryEl);
+          });
+
+          container.appendChild(activeSection);
+        }
+
+        // Render old advisories
+        if (this.oldAdvisories[category].length > 0) {
+          const oldSection = document.createElement('div');
+          oldSection.innerHTML = '<h2 class="text-2xl font-bold mb-4">Old Advisories</h2>';
+
+          this.oldAdvisories[category].forEach(advisory => {
+            const advisoryEl = this.createAdvisoryElement(advisory, false);
+            oldSection.appendChild(advisoryEl);
+          });
+
+          container.appendChild(oldSection);
+        }
+      }
+
+      createAdvisoryElement(advisory, isActive) {
+        const container = document.createElement('div');
+        container.className = `p-4 rounded-lg mb-4 advisory-card ${advisory.category === 'heavyRainfall' ? 'bg-red-50' :
+          advisory.category === 'rainfall' ? 'bg-green-50' :
+            advisory.category === 'otherUpdates' ? 'bg-purple-50' :
+              advisory.category === 'noClasses' ? 'bg-yellow-50' :
+                'bg-blue-50'
+          }`;
+
+        // Styling based on category
+        const styles = {
+          headingFont: 'font-sans font-bold',
+          dateFont: 'font-serif font-bold',
+          description: 'text-gray-700 whitespace-pre-wrap'  // Key change: added whitespace-pre-wrap
+        };
+
+        // Construct advisory HTML
+        container.innerHTML = `
+                    <h3 class="${styles.headingFont} ${advisory.category === 'heavyRainfall' ? 'text-red-800' :
+            advisory.category === 'rainfall' ? 'text-green-800' :
+              advisory.category === 'otherUpdates' ? 'text-purple-800' :
+                advisory.category === 'noClasses' ? 'text-yellow-800' :
+                  'text-blue-800'
+          }">${advisory.heading}</h3>
+
+                    ${advisory.weatherSystem ?
+            `<h4 class="font-sans font-bold text-gray-700">${advisory.weatherSystem}</h4>` :
+            ''
+          }
+
+                    <p class="${styles.dateFont} text-gray-600">
+                        ${advisory.issuedDate.toLocaleString()}
+                        ${isActive && advisory.isNew ?
+            '<span class="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded new-badge">NEW</span>' :
+            ''
+          }
+                    </p>
+
+                    <p class="${styles.description}">${advisory.description}</p>
+
+                    ${isActive ?
+            `<button onclick="advisorySystem.deleteAdvisory('${advisory.category}', '${advisory.id}')" 
+                         class="mt-2 bg-red-500 text-white px-3 py-1 rounded">
+                            Delete
+                        </button>` :
+            ''
+          }
+                `;
+
+        return container;
+      }
+
+      deleteAdvisory(category, id) {
+        // Move to old advisories
+        const advisoryToDelete = this.advisories[category].find(adv => adv.id === id);
+        if (advisoryToDelete) {
+          this.oldAdvisories[category].push(advisoryToDelete);
+          this.advisories[category] = this.advisories[category].filter(adv => adv.id !== id);
+
+          // Re-render category details
+          this.renderCategoryDetails(category);
+        }
+      }
+    }
+
+    // Global Variables and Functions
+    const advisorySystem = new AdvisorySystem();
+
+    function openCategoryDetails(category) {
+      const modal = document.getElementById('categoryDetailsModal');
+      modal.classList.remove('hidden');
+      modal.dataset.currentCategory = category;
+      advisorySystem.renderCategoryDetails(category);
+    }
+
+    function closeCategoryDetails() {
+      document.getElementById('categoryDetailsModal').classList.add('hidden');
+    }
+
+    function verifyPasscode() {
+      const passcode = document.getElementById('passcodeInput').value;
+      const loginError = document.getElementById('loginError');
+
+      if (passcode === 'Toraji') {
+        document.getElementById('loginModal').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        loginError.classList.add('hidden');
+      } else {
+        loginError.classList.remove('hidden');
+      }
+    }
+
+    function closeAdminPanel() {
+      document.getElementById('adminPanel').classList.add('hidden');
+    }
+  </script>
+</body>
+
+</html>>
